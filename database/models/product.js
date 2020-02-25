@@ -2,8 +2,8 @@
 module.exports = (sequelize, DataTypes) => {
   const Product = sequelize.define('Product', {
     name: DataTypes.STRING,
-    type: DataTypes.STRING,
-    category: DataTypes.STRING,
+    type_id: DataTypes.INTEGER,
+    category_id: DataTypes.INTEGER,
     description: DataTypes.TEXT,
     quantity: DataTypes.INTEGER,
     price: DataTypes.DECIMAL,

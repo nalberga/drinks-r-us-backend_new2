@@ -28,14 +28,14 @@ const sequelize = new Sequelize(process.env.DATABASE_URL || connectionString, {
 
 })
 
+console.log(connectionString);
+
 const app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 app.use(express.static('public'));
-
-
 
 app.listen(3000);
 console.log('Drinks-R-Us API is running');
