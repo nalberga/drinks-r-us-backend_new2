@@ -9,7 +9,13 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       type_id: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Types',
+          key: 'id'
+        },
+        onUpdate: 'cascade',
+        onDelete: 'cascade'
       },
       category: {
         type: Sequelize.STRING

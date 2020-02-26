@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT
   }, {});
   Type.associate = function(models) {
-    // associations can be defined here
+    Type.hasMany(Product, { foreignKey: 'type_id' });
+    Type.hasMany(Category, { foreignKey: 'type_id' });
   };
   return Type;
 };

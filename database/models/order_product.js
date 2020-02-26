@@ -4,10 +4,11 @@ module.exports = (sequelize, DataTypes) => {
     order_id: DataTypes.INTEGER,
     product_id: DataTypes.INTEGER,
     quantity: DataTypes.INTEGER,
-    total_price: DataTypes.DECIMAL
+    price: DataTypes.DECIMAL
   }, {});
   Order_Product.associate = function(models) {
-    // associations can be defined here
+    Order_Product.belongsTo(Order);
+    Order_Product.belongsTo(Product);
   };
   return Order_Product;
 };

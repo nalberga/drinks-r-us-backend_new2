@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     admin: DataTypes.BOOLEAN
   }, {});
   User.associate = function(models) {
-    // associations can be defined here
+    User.hasMany(Order, { foreignKey: 'user_id' });
   };
   return User;
 };
