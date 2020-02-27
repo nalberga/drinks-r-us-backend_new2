@@ -6,7 +6,7 @@ module.exports = {
       f_name: 'Bilbo',
       l_name: 'Baggins',
       email: 'bilbo@shire.com',
-      phone: 305-122-2211,
+      phone: 3051222211,
       password: 'pass1234',
       admin: false,
       createdAt: new Date(),
@@ -15,7 +15,7 @@ module.exports = {
       f_name: 'Frodo',
       l_name: 'Baggins',
       email: 'frodo@shire.com',
-      phone: 305-122-2211,
+      phone: 3051222211,
       password: 'pass1234',
       admin: false,
       createdAt: new Date(),
@@ -24,7 +24,7 @@ module.exports = {
       f_name: 'Gandalf',
       l_name: 'The White',
       email: 'gandalf@shire.com',
-      phone: 305-122-2211,
+      phone: 3051222211,
       password: 'pass1234',
       admin: false,
       createdAt: new Date(),
@@ -33,7 +33,7 @@ module.exports = {
       f_name: 'Bunny',
       l_name: 'Baggins',
       email: 'bunny@shire.com',
-      phone: 305-122-2211,
+      phone: 3051222211,
       password: 'pass1234',
       admin: false,
       createdAt: new Date(),
@@ -42,7 +42,7 @@ module.exports = {
       f_name: 'Willow',
       l_name: 'Baggins',
       email: 'willow@shire.com',
-      phone: 305-122-2211,
+      phone: 3051222211,
       password: 'pass1234',
       admin: false,
       createdAt: new Date(),
@@ -51,8 +51,6 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-
-    return queryInterface.bulkDelete('Users', null, {});
-    
+    return queryInterface.bulkDelete('Users', null, {});   
   }
 };
