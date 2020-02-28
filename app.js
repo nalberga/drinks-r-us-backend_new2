@@ -18,6 +18,7 @@ const bcrypt = require('bcrypt');
 
 const Sequelize = require('sequelize');
 const UserModel = require('./database/models/user');
+const ProductModel = require('./database/models/product');
 
 const connectionString = `postgres://${config.username}:${config.password}@${config.host}:${config.port}/${config.database}`
 const sequelize = new Sequelize(process.env.DATABASE_URL || connectionString, {
@@ -35,6 +36,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL || connectionString, {
 console.log(connectionString);
 
 const Users = UserModel(sequelize, Sequelize);
+const Products = ProductModel(sequelize, Sequelize);
 
 const app = express();
 
@@ -44,7 +46,7 @@ app.use(cors());
 app.use(express.static('public'));
 
 // API get all users
-app.get('/api/users/all', function (req, res) {
+app.get('/api/users/', function (req, res) {
 
     Users.findAll().then((results) => {
         res.setHeader('Content-Type', 'application/json');
@@ -192,6 +194,40 @@ app.delete('/api/users/:id', function (req, res) {
         console.log(e);
         res.status(434).send('error retrieving info on target User');
 
+    })
+
+});
+
+// API get all products
+app.get('/api/products/', function (req, res) {
+
+    Products.findAll().then((results) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(results));
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('Error retrieving Products');
+    })
+
+});
+
+// API get target user
+app.get('/api/products/:id', function (req, res) {
+
+    let id = req.params.id;
+
+    Products.findOne({ where: { id: id } }).then(results => {
+
+        if (results) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
+        } else {
+            res.status(434).send('Product does not exist is DB');
+        }
+
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('error retrieving info on target Product');
     })
 
 });
