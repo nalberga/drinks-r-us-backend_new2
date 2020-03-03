@@ -63,7 +63,7 @@ app.get('/api/users/', (req, res) => {
 });
 
 // API get target user
-app.get('/api/users/:id', function (req, res) {
+app.get('/api/users/:id', (req, res) => {
 
     let id = req.params.id;
 
@@ -76,7 +76,7 @@ app.get('/api/users/:id', function (req, res) {
             res.status(434).send('User does not exist is DB');
         }
 
-    }).catch(function (e) {
+    }).catch((e) => {
         console.log(e);
         res.status(434).send('error retrieving info on target User');
     })
@@ -84,7 +84,7 @@ app.get('/api/users/:id', function (req, res) {
 });
 
 // API add user
-app.post('/api/users/register', function (req, res) {
+app.post('/api/users/register', (req, res) => {
 
     //default admin to false if req.body.admin is null
     if (req.body.admin == null) {
@@ -107,7 +107,7 @@ app.post('/api/users/register', function (req, res) {
         var hash = bcrypt.hashSync(data.password, salt);
         data.password = hash;
 
-        Users.create(data).then(function (user) {
+        Users.create(data).then((user) => {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(user));
         });
@@ -526,6 +526,119 @@ app.delete('/api/orders/:id', function (req, res) {
 
 });
 
+//API get all order products
+app.get('/api/order-products/', (req, res) => {
 
-app.listen(3000);
+    OrderProducts.findAll().then((results) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(results));
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('Error retrieving Order Products');
+    })
+
+});
+
+// API get target order product
+app.get('/api/order-products/:id', (req, res) => {
+
+    let id = req.params.id;
+
+    OrderProducts.findOne({ where: { id: id } }).then(results => {
+
+        if (results) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
+        } else {
+            res.status(434).send('Order product does not exist is DB');
+        }
+
+    }).catch((e) => {
+        console.log(e);
+        res.status(434).send('error retrieving info on target Order product');
+    })
+
+});
+
+// API get all products of target order
+app.get('/api/order-products/order/:id', (req, res) => {
+
+    const id = req.params.id;
+
+    OrderProducts.findAll({ where: { order_id: id } }).then((results) => {
+
+        if (results.length != 0) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
+        } else {
+            res.status(434).send('No products found belonging to this order!');
+        }
+
+    }).catch((e) => {
+        console.log(e);
+        res.status(434).send('Error retrieving Products of this order');
+    })
+
+});
+
+// API get all order products of target user
+app.get('/api/order-products/user/:id', (req, res) => {
+
+    const id = req.params.id;
+
+    Orders.findAll({ where: { user_id: id } }).then((orders) => {
+
+        if (orders.length != 0) {
+
+            let userOrderProducts = [];
+
+            let promise = new Promise(() => {
+                
+                orders.forEach(order => {
+
+                    OrderProducts.findAll({
+
+                        where: { order_id: order.id }
+
+                    }).then(results => {
+
+                        results.forEach(product => userOrderProducts.push(product))
+
+                    }).catch((e) => {
+
+                        console.log(e);
+                        res.status(434).send('Error retrieving Products of this order');
+
+                    });
+
+                })
+                .then(() => {
+
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(userOrderProducts));
+
+                })
+                .catch((e) => {
+                    console.log(e);
+                    res.status(434).send('Error retrieving Products of this User');
+                })
+            });
+
+        } else {
+
+            console.log(e);
+            res.status(434).send('No products found belonging to this user!');
+
+        }
+
+    }).catch((e) => {
+
+        console.log(e);
+        res.status(434).send('Error retrieving Products belonging to this user');
+
+    });
+
+});
+
+app.listen(3001);
 console.log('Drinks-R-Us API is running');
