@@ -19,6 +19,8 @@ const bcrypt = require('bcrypt');
 const Sequelize = require('sequelize');
 const UserModel = require('./database/models/user');
 const ProductModel = require('./database/models/product');
+const OrderModel = require('./database/models/order');
+const OrderProductModel = require('./database/models/order_product');
 
 const connectionString = `postgres://${config.username}:${config.password}@${config.host}:${config.port}/${config.database}`
 const sequelize = new Sequelize(process.env.DATABASE_URL || connectionString, {
@@ -37,6 +39,8 @@ console.log(connectionString);
 
 const Users = UserModel(sequelize, Sequelize);
 const Products = ProductModel(sequelize, Sequelize);
+const Orders = OrderModel(sequelize, Sequelize);
+const OrderProducts = OrderProductModel(sequelize, Sequelize);
 
 const app = express();
 
@@ -46,7 +50,7 @@ app.use(cors());
 app.use(express.static('public'));
 
 // API get all users
-app.get('/api/users/', function (req, res) {
+app.get('/api/users/', (req, res) => {
 
     Users.findAll().then((results) => {
         res.setHeader('Content-Type', 'application/json');
@@ -166,30 +170,25 @@ app.put('/api/users/:id', function (req, res) {
 });
 
 // API delete target User
-app.delete('/api/users/:id', function (req, res) {
+app.delete('/api/users/:id', (req, res) => {
 
     const id = req.params.id;
 
-    Users.findOne({ where: { id: id } }).then(results => {
+    Users.findOne({ where: { id: id } }).then(user => {
 
-        if (results) {
+        user.destroy().then(() => {
 
-            const targetUser = JSON.stringify(results);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(user));
 
-            Users.destroy({ where: { id: id } }).then(function (user) {
+        }).catch((e) => {
 
-                res.setHeader('Content-Type', 'application/json');
-                res.end(targetUser);
+            console.log(e);
+            res.status(434).send('unable to delete User')
 
-            }).catch(function (e) {
+        })
 
-                res.status(434).send('unable to delete User')
-
-            })
-
-        }
-
-    }).catch(function (e) {
+    }).catch((e) => {
 
         console.log(e);
         res.status(434).send('error retrieving info on target User');
@@ -352,28 +351,23 @@ app.put('/api/products/:id', function (req, res) {
 });
 
 // API delete target Product
-app.delete('/api/products/:id', function (req, res) {
+app.delete('/api/products/:id', (req, res) => {
 
     const id = req.params.id;
 
-    Products.findOne({ where: { id: id } }).then(results => {
+    Products.findOne({ where: { id: id } }).then(product => {
 
-        if (results) {
+        product.destroy().then(() => {
 
-            const targetProduct = JSON.stringify(results);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(product));
 
-            Products.destroy({ where: { id: id } }).then(() => {
+        }).catch((e) => {
 
-                res.setHeader('Content-Type', 'application/json');
-                res.end(targetProduct);
+            console.log(e);
+            res.status(434).send('unable to delete Product')
 
-            }).catch((e) => {
-
-                res.status(434).send('unable to delete Product')
-
-            })
-
-        }
+        })
 
     }).catch((e) => {
 
@@ -383,6 +377,155 @@ app.delete('/api/products/:id', function (req, res) {
     })
 
 });
+
+// API get all orders
+app.get('/api/orders/', (req, res) => {
+
+    Orders.findAll().then((results) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(results));
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('Error retrieving Orders');
+    })
+
+});
+
+// API get target order
+app.get('/api/orders/:id', function (req, res) {
+
+    let id = req.params.id;
+
+    Orders.findOne({ where: { id: id } }).then(results => {
+
+        if (results) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
+        } else {
+            res.status(434).send('Order does not exist is DB');
+        }
+
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('error retrieving info on target Order');
+    })
+
+});
+
+// API get all orders made by target User
+app.get('/api/orders/user/:id', function (req, res) {
+
+    const id = req.params.id;
+
+    Orders.findAll({ where: { user_id: id } }).then((results) => {
+
+        if (results.length != 0) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
+        } else {
+            res.status(434).send(`No orders have been made by user ${id}!`);
+        }
+
+    }).catch(function (e) {
+        console.log(e);
+        res.status(434).send('User does not exist');
+    })
+
+});
+
+// Register an Order
+app.post('/api/orders/register', function (req, res) {
+
+    const data = {
+
+        user_id: req.body.user_id,
+        purchase_date: new Date(),
+        quantity: req.body.quantity,
+        price: req.body.price
+
+    };
+
+
+    if (data.user_id && data.purchase_date && data.quantity && data.price) {
+
+        Orders.create(data).then(order => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(order));
+        }).catch((e) => {
+            console.log(e);
+            res.status(434).send('error registering Order');
+        })
+
+    } else {
+
+        res.status(434).send('All fields are required to register an Order.');
+
+    }
+
+});
+
+// API update a target order's info
+app.put('/api/orders/:id', function (req, res) {
+
+    const data = {
+
+        id: req.params.id,
+        user_id: req.body.user_id,
+        quantity: req.body.quantity,
+        price: req.body.price
+
+    };
+
+    Orders.findOne({ where: { id: data.id } }).then(order => {
+
+        order.update({
+
+            user_id: data.user_id,
+            quantity: data.quantity,
+            price: data.price
+
+        }).then(newData => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(newData));
+        }).catch((e) => {
+            res.status(434).send('unable to update Order')
+        })
+
+    }).catch((e) => {
+        console.log(e);
+        res.status(434).send(`unable to find Order ${data.id}`)
+
+    })
+
+});
+
+// API delete target Order
+app.delete('/api/orders/:id', function (req, res) {
+
+    const id = req.params.id;
+
+    Orders.findOne({ where: { id: id } }).then(order => {
+
+        order.destroy().then(() => {
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(order));
+
+        }).catch((e) => {
+
+            res.status(434).send('unable to delete Order')
+
+        })
+
+    }).catch((e) => {
+
+        console.log(e);
+        res.status(434).send('error retrieving info on target Order');
+
+    })
+
+});
+
 
 app.listen(3000);
 console.log('Drinks-R-Us API is running');
