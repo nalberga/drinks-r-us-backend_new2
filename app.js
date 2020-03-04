@@ -434,26 +434,51 @@ app.get('/api/orders/user/:id', function (req, res) {
 });
 
 // Register an Order
+/*
+
+{
+    user_id: 1,
+    quantity: 5,
+    price: 500,
+    purchase_date: new Date(),
+    order_products: [
+        {product_id: 3, quantity: 10, price: 400},
+        {product_id: 3, quantity: 10, price: 400},
+        {product_id: 3, quantity: 10, price: 400}
+    ]
+}
+
+*/
 app.post('/api/orders/register', function (req, res) {
 
     const data = {
 
         user_id: req.body.user_id,
-        purchase_date: new Date(),
         quantity: req.body.quantity,
-        price: req.body.price
+        price: req.body.price,
+        purchase_date: new Date(),
 
     };
 
-
     if (data.user_id && data.purchase_date && data.quantity && data.price) {
 
-        Orders.create(data).then(order => {
+        Orders.create(data).then((order) => {
+
+            req.body.order_products.forEach(product => {
+
+                product.order_id = order.id;
+                OrderProducts.create(product);
+
+            });
+
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(order));
+
         }).catch((e) => {
+            
             console.log(e);
             res.status(434).send('error registering Order');
+
         })
 
     } else {
@@ -464,7 +489,10 @@ app.post('/api/orders/register', function (req, res) {
 
 });
 
-// API update a target order's info
+/* API update a target order's info
+
+*/
+
 app.put('/api/orders/:id', function (req, res) {
 
     const data = {
@@ -593,7 +621,7 @@ app.get('/api/order-products/user/:id', (req, res) => {
             let userOrderProducts = [];
 
             let promise = new Promise(() => {
-                
+
                 orders.forEach(order => {
 
                     OrderProducts.findAll({
@@ -612,16 +640,16 @@ app.get('/api/order-products/user/:id', (req, res) => {
                     });
 
                 })
-                .then(() => {
+                    .then(() => {
 
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify(userOrderProducts));
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(userOrderProducts));
 
-                })
-                .catch((e) => {
-                    console.log(e);
-                    res.status(434).send('Error retrieving Products of this User');
-                })
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                        res.status(434).send('Error retrieving Products of this User');
+                    })
             });
 
         } else {
