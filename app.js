@@ -440,7 +440,6 @@ app.get('/api/orders/user/:id', function (req, res) {
     user_id: 1,
     quantity: 5,
     price: 500,
-    purchase_date: new Date(),
     order_products: [
         {product_id: 3, quantity: 10, price: 400},
         {product_id: 3, quantity: 10, price: 400},
@@ -464,7 +463,9 @@ app.post('/api/orders/register', function (req, res) {
 
         Orders.create(data).then((order) => {
 
-            req.body.order_products.forEach(product => {
+            const orderProducts = JSON.parse(req.body.order_products);
+
+            orderProducts.forEach(product => {
 
                 product.order_id = order.id;
                 OrderProducts.create(product);
@@ -489,10 +490,7 @@ app.post('/api/orders/register', function (req, res) {
 
 });
 
-/* API update a target order's info
-
-*/
-
+// API update a target order's info
 app.put('/api/orders/:id', function (req, res) {
 
     const data = {
