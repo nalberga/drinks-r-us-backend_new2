@@ -7,8 +7,8 @@ module.exports = (sequelize, DataTypes) => {
     price: DataTypes.DECIMAL
   }, {});
   Order.associate = function (models) {
-    Order.belongsTo(User);
-    Order.hasMany(Order_Product, { foreignKey: 'order_id' });
+    Order.belongsTo(models.User);
+    Order.hasMany(models.Order_Product, { foreignKey: 'order_id' });
   };
   return Order;
 };

@@ -7,9 +7,9 @@ module.exports = (sequelize, DataTypes) => {
     phone: DataTypes.BIGINT,
     password: DataTypes.STRING,
     admin: DataTypes.BOOLEAN
-  }, {});
+  }, {}); 
   User.associate = function(models) {
-    User.hasMany(Order, { foreignKey: 'user_id' });
+    User.hasMany(models.Order, { foreignKey: 'user_id' });
   };
   return User;
 };

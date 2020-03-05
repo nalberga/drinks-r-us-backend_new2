@@ -11,9 +11,12 @@ const config = {
 };
 
 const express = require('express');
+const session = require('express-session');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 
 const Sequelize = require('sequelize');
@@ -47,7 +50,33 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
+
 app.use(express.static('public'));
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LocalStrategy(
+    
+    function(username, password, done){
+         if(username === 'bilbo@shire.com' && password === 'pass1234'){
+              return done(null, {username: 'bilbo@shire.com'});
+         }
+         else{
+              return done(null,false);
+         }
+    }
+));
+
+// Login route
+
+app.post('/login', passport.authenticate('local', { successRedirect: '/', failureRedirect: '/login', failureFlash: true }));
 
 // API get all users
 app.get('/api/users/', (req, res) => {
@@ -448,7 +477,7 @@ app.get('/api/orders/user/:id', function (req, res) {
 }
 
 */
-app.post('/api/orders/register', function (req, res) {
+app.post('/api/orders/register', (req, res) => {
 
     const data = {
 
@@ -459,9 +488,9 @@ app.post('/api/orders/register', function (req, res) {
 
     };
 
-    if (data.user_id && data.purchase_date && data.quantity && data.price) {
+    if (data.user_id && data.purchase_date && data.quantity && data.price && req.body.order_products) {
 
-        Orders.create(data).then((order) => {
+        Orders.create(data).then(order => {
 
             const orderProducts = JSON.parse(req.body.order_products);
 
@@ -473,10 +502,10 @@ app.post('/api/orders/register', function (req, res) {
             });
 
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(order));
+            res.end(JSON.stringify([order, orderProducts]));
 
         }).catch((e) => {
-            
+
             console.log(e);
             res.status(434).send('error registering Order');
 
@@ -612,57 +641,19 @@ app.get('/api/order-products/user/:id', (req, res) => {
 
     const id = req.params.id;
 
-    Orders.findAll({ where: { user_id: id } }).then((orders) => {
+    Orders.findAll({ where: { user_id: id }, include: [OrderProducts] }).then((results) => {
 
-        if (orders.length != 0) {
-
-            let userOrderProducts = [];
-
-            let promise = new Promise(() => {
-
-                orders.forEach(order => {
-
-                    OrderProducts.findAll({
-
-                        where: { order_id: order.id }
-
-                    }).then(results => {
-
-                        results.forEach(product => userOrderProducts.push(product))
-
-                    }).catch((e) => {
-
-                        console.log(e);
-                        res.status(434).send('Error retrieving Products of this order');
-
-                    });
-
-                })
-                    .then(() => {
-
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify(userOrderProducts));
-
-                    })
-                    .catch((e) => {
-                        console.log(e);
-                        res.status(434).send('Error retrieving Products of this User');
-                    })
-            });
-
+        if (results.length != 0) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(results));
         } else {
-
-            console.log(e);
-            res.status(434).send('No products found belonging to this user!');
-
+            res.status(434).send(`No orders have been made by user ${id}!`);
         }
 
-    }).catch((e) => {
-
+    }).catch(function (e) {
         console.log(e);
-        res.status(434).send('Error retrieving Products belonging to this user');
-
-    });
+        res.status(434).send(`User ${id} does not exist`);
+    })
 
 });
 
