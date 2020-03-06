@@ -61,6 +61,7 @@ app.use(session({
 // Configure the local strategy for use by Passport.
 passport.use(new LocalStrategy(
     function (username, password, cb) {
+
         Users.findOne({ where: { email: username } }).then((user) => {
 
             if (user.password != password) { return cb(null, false); }
@@ -71,14 +72,17 @@ passport.use(new LocalStrategy(
             return cb(e);
 
         })
-        
+
 }));
 
 passport.serializeUser(function (user, cb) {
+    
     cb(null, user.id);
+
 });
 
 passport.deserializeUser(function (id, cb) {
+
     Users.findOne({ where: { id: id } }).then((user) => {
 
         cb(null, user);
@@ -88,13 +92,14 @@ passport.deserializeUser(function (id, cb) {
         return cb(err);
 
     })
+
 });
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Login route
-app.post('/login', passport.authenticate('local', { successRedirect: '/success', failureRedirect: '/login' }));
+app.post('/login', passport.authenticate('local', { successRedirect: '/', failureRedirect: '/Login' }));
 
 // API get all users
 app.get('/api/users/', (req, res) => {
