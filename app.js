@@ -48,35 +48,53 @@ const OrderProducts = OrderProductModel(sequelize, Sequelize);
 const app = express();
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 app.use(express.static('public'));
 app.use(session({
     secret: 'keyboard cat',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: true }
+    saveUninitialized: false
 }));
+
+// Configure the local strategy for use by Passport.
+passport.use(new LocalStrategy(
+    function (username, password, cb) {
+        Users.findOne({ where: { email: username } }).then((user) => {
+
+            if (user.password != password) { return cb(null, false); }
+            return cb(null, user);
+
+        }).catch(function (e) {
+
+            return cb(e);
+
+        })
+        
+}));
+
+passport.serializeUser(function (user, cb) {
+    cb(null, user.id);
+});
+
+passport.deserializeUser(function (id, cb) {
+    Users.findOne({ where: { id: id } }).then((user) => {
+
+        cb(null, user);
+
+    }).catch(function (e) {
+        
+        return cb(err);
+
+    })
+});
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(new LocalStrategy(
-    
-    function(username, password, done){
-         if(username === 'bilbo@shire.com' && password === 'pass1234'){
-              return done(null, {username: 'bilbo@shire.com'});
-         }
-         else{
-              return done(null,false);
-         }
-    }
-));
-
 // Login route
-
-app.post('/login', passport.authenticate('local', { successRedirect: '/', failureRedirect: '/login', failureFlash: true }));
+app.post('/login', passport.authenticate('local', { successRedirect: '/success', failureRedirect: '/login' }));
 
 // API get all users
 app.get('/api/users/', (req, res) => {
@@ -184,10 +202,14 @@ app.put('/api/users/:id', function (req, res) {
             admin: data.admin
 
         }).then(function (newData) {
+
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(newData));
+
         }).catch(function (e) {
+
             res.status(434).send('unable to update User')
+
         })
 
     }).catch(function (e) {
